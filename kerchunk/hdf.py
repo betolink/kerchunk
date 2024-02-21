@@ -54,7 +54,9 @@ class SingleHdf5ToZarr:
         Include chunks smaller than this value directly in the output. Zero or negative
         to disable
     storage_options: dict
-        passed to fsspec if h5f is a str
+        passed to fsspec if h5f is a str, defaults to blockcache 2MB.
+    h5py_kwargs: dict
+        passed to h5py.File
     error: "warn" (default) | "pdb" | "ignore" | "raise"
     vlen_encode: ["embed", "null", "leave", "encode"]
         What to do with VLEN string variables or columns of tabular variables
@@ -77,7 +79,9 @@ class SingleHdf5ToZarr:
         url: str = None,
         spec=1,
         inline_threshold=500,
-        storage_options=None,
+        storage_options={"cache_type": "blockcache",
+                         "block_size": 2*1024*1024 },
+        h5py_kwargs={},
         error="warn",
         vlen_encode="embed",
         out=None,
@@ -96,7 +100,7 @@ class SingleHdf5ToZarr:
         if vlen_encode not in ["embed", "null", "leave", "encode"]:
             raise NotImplementedError
         self.vlen = vlen_encode
-        self._h5f = h5py.File(self.input_file, mode="r")
+        self._h5f = h5py.File(self.input_file, mode="r", **h5py_kwargs)
 
         self.store = out or {}
         self._zroot = zarr.group(store=self.store, overwrite=True)
